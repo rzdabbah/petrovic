@@ -1,0 +1,6 @@
+boto3
+aiohttp
+yarl
+psycopg2-binary
+jproperties
+smart_open
