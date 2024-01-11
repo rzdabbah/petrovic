@@ -83,7 +83,7 @@ resource "aws_security_group" "sg_petrovic" {
   }
 }
 
-resource "aws_instance" "instance" {
+resource "aws_instance" "petrovic_worker_instance" {
   ami                         = var.linux_ami 
   availability_zone           = var.ec2.availability_zone
   instance_type               = var.ec2.instance_type
@@ -97,5 +97,12 @@ resource "aws_instance" "instance" {
     volume_size           = var.ec2.volume_size
     volume_type           = var.ec2.volume_type
   }
-  user_data = file("templates/${var.ec2.os_type}.sh")
+  user_data = templatefile("templates/docker_run.tftpl", { 
+    ECR_REPO_URL= "581385275748.dkr.ecr.us-west-2.amazonaws.com", 
+    IMAGE_NAME = "petrovic" ,
+})
+  user_data_replace_on_change = true
+}
+output "user_data" {
+  value = aws_instance.petrovic_worker_instance.user_data
 }

@@ -35,7 +35,7 @@ def add_all_bucket_keys_to_db ():
 
 
 def run():
-    #add_all_bucket_keys_to_db()
+    add_all_bucket_keys_to_db()
     postgress = DbController(app_conf)
     res =  postgress.get_next_file()
     bucket_name = res[0]
