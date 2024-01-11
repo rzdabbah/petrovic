@@ -10,6 +10,7 @@ class DbController():
             database= app_conf.get('pstg_db'),
             user= app_conf.get('pstg_user'),
             password= app_conf.get('pstg_password'))
+        print("DB coonection done !")
 
     def getConnection(self):
         return self.conn

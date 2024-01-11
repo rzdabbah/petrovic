@@ -6,12 +6,6 @@ sudo service docker start
 sudo usermod -a -G docker ec2-user
 
 
-sudo mkdir /home/ec2-user/.aws/
-sudo echo "
-[default]
-aws_access_key_id = AKIAYOXKDJFSNCKBSQKN
-aws_secret_access_key = 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
-" >> /home/ec2-user/.aws/credentials
 
 sudo echo "
 
@@ -19,7 +13,7 @@ AWS_REGION=us-west-2
 ECR_REPO_URL=581385275748.dkr.ecr.us-west-2.amazonaws.com
 ECR_IMAGE_NAME=petrovic
 queue_url=https://sqs.us-west-2.amazonaws.com/581385275748/petrovic_queue
-pstg_host=petrovic-postgres-cluster.cluster-csjlydmlpmsf.us-west-2.rds.amazonaws.com
+pstg_host=petrovic-postgres-cluster-0.csjlydmlpmsf.us-west-2.rds.amazonaws.com
 pstg_db=postgres
 pstg_user=mandomauser
 pstg_password=mandomapassword
@@ -29,10 +23,9 @@ pstg_password=mandomapassword
 sudo echo "
 #! /bin/bash
 
-export AWS_REGION=us-west-2
-aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${ECR_REPO_URL}/${IMAGE_NAME}
-docker pull  ${ECR_REPO_URL}/${IMAGE_NAME}:latest
-docker run --env-file ./env_file.env ${ECR_REPO_URL}/${IMAGE_NAME}:latest
+sudo aws ecr get-login-password --region us-west-2 | sudo docker login --username AWS --password-stdin ${ECR_REPO_URL}/${IMAGE_NAME}
+sudo docker pull  ${ECR_REPO_URL}/${IMAGE_NAME}:latest
+sudo docker run --env-file ./env_file.env ${ECR_REPO_URL}/${IMAGE_NAME}:latest
 
 " >> /home/ec2-user/run_docker.sh
 

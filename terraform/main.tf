@@ -54,6 +54,8 @@ data "http" "laptop_outbound_ip" {
   url = "http://ipv4.icanhazip.com"
 }
 
+
+
 resource "aws_security_group" "sg_petrovic" {
   description = "petrovic sg for terraform"
   vpc_id      = "vpc-d833bfbd"
@@ -83,14 +85,60 @@ resource "aws_security_group" "sg_petrovic" {
   }
 }
 
+data "aws_iam_policy_document" "instance_assume_role_policy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com","sqs.amazonaws.com","ecr.amazonaws.com"]
+    }
+  }
+}
+resource "aws_iam_role" "worker_role" {
+  name               = "worker_role"
+  path               = "/system/"
+  assume_role_policy = data.aws_iam_policy_document.instance_assume_role_policy.json
+
+  inline_policy {
+    name = "my_inline_policy"
+
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Action   = ["ecr:*","sqs:*"]
+          Effect   = "Allow"
+          Resource = "*"
+        },
+      ]
+    })
+  }
+}
+
+
+resource "aws_iam_role_policy_attachment" "example_attachment" {
+  role       = aws_iam_role.worker_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+}
+
+resource "aws_iam_instance_profile" "worker_profile" {
+  name = "worker_profile"
+  role = aws_iam_role.worker_role.name
+}
+
+
+
 resource "aws_instance" "petrovic_worker_instance" {
   ami                         = var.linux_ami 
   availability_zone           = var.ec2.availability_zone
   instance_type               = var.ec2.instance_type
   associate_public_ip_address = true
   vpc_security_group_ids      = [aws_security_group.sg_petrovic.id]
-  #subnet_id                   = aws_subnet.main.id
-  #key_name                    = aws_key_pair.deployer.id
+  #subnet_id                  = aws_subnet.main.id
+  #key_name                   = aws_key_pair.deployer.id
+  iam_instance_profile        = aws_iam_instance_profile.worker_profile.name
+
   root_block_device {
     delete_on_termination = true
     encrypted             = false
