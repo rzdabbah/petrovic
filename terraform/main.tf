@@ -40,6 +40,8 @@ resource "aws_sqs_queue" "petrovic_queue" {
   }
 }
 
+
+
 #ec2 instance
 
 variable "linux_ami" {
@@ -64,7 +66,7 @@ resource "aws_security_group" "sg_petrovic" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${chomp(data.http.laptop_outbound_ip.body)}/32"]
+    cidr_blocks = ["${chomp(data.http.laptop_outbound_ip.response_body)}/32"]
   }
   dynamic "ingress" {
     for_each = var.security_groups
@@ -127,8 +129,13 @@ resource "aws_iam_instance_profile" "worker_profile" {
   role = aws_iam_role.worker_role.name
 }
 
-
-
+data "aws_ecr_repository" "petrovic" {
+  name = "petrovic"
+}
+data "aws_ecr_image" "service_image" {
+  repository_name = "petrovic"
+  image_tag       = "latest"
+}
 resource "aws_instance" "petrovic_worker_instance" {
   ami                         = var.linux_ami 
   availability_zone           = var.ec2.availability_zone
@@ -146,11 +153,28 @@ resource "aws_instance" "petrovic_worker_instance" {
     volume_type           = var.ec2.volume_type
   }
   user_data = templatefile("templates/docker_run.tftpl", { 
-    ECR_REPO_URL= "581385275748.dkr.ecr.us-west-2.amazonaws.com", 
+    ECR_REPO_URL= data.aws_ecr_repository.petrovic.repository_url, 
     IMAGE_NAME = "petrovic" ,
+    QUEUE_URL = aws_sqs_queue.petrovic_queue.url,
+    DB_HOST=join("", aws_rds_cluster.petrovic_rds[*].endpoint) ,
+    DB_DBNMAE="postgres",
+    DB_USERNMAE=var.rds_master_username,
+    DB_USERPASSWORD=var.rds_master_password
 })
   user_data_replace_on_change = true
 }
 output "user_data" {
   value = aws_instance.petrovic_worker_instance.user_data
+}
+
+output "queue_url" {
+  value = aws_sqs_queue.petrovic_queue.url
+}
+
+output "laptop_outbound_ip"{
+  value = data.http.laptop_outbound_ip.response_body
+}
+output "rds_endpoint" {
+  value       =  join("", aws_rds_cluster.petrovic_rds[*].endpoint) 
+  description = "The DNS address of the RDS instance"
 }

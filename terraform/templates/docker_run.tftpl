@@ -12,11 +12,11 @@ sudo echo "
 AWS_REGION=us-west-2
 ECR_REPO_URL=581385275748.dkr.ecr.us-west-2.amazonaws.com
 ECR_IMAGE_NAME=petrovic
-queue_url=https://sqs.us-west-2.amazonaws.com/581385275748/petrovic_queue
-pstg_host=petrovic-postgres-cluster-0.csjlydmlpmsf.us-west-2.rds.amazonaws.com
-pstg_db=postgres
-pstg_user=mandomauser
-pstg_password=mandomapassword
+queue_url=${QUEUE_URL}
+pstg_host=${DB_HOST}
+pstg_db=${DB_DBNMAE}
+pstg_user=${DB_USERNMAE}
+pstg_password=${DB_USERPASSWORD}
 
 " >> /home/ec2-user/env_file.env 
 
